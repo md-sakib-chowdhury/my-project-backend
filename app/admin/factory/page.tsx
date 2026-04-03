@@ -8,7 +8,10 @@ interface Factory {
     name: string;
     location: string;
     capacity: number;
-    machinery: string;
+    machineryType: string;
+    image: string;
+    label: string;
+    inventoryItems: { sl: string; name: string; brand: string; qty: string }[];
     status: string;
 }
 
@@ -20,9 +23,14 @@ export default function AdminFactory() {
         name: "",
         location: "",
         capacity: "",
-        machinery: "",
+        machineryType: "",
+        image: "",
+        label: "",
         status: "active",
     });
+    const [inventoryItems, setInventoryItems] = useState([
+        { sl: "", name: "", brand: "", qty: "" }
+    ]);
 
     useEffect(() => {
         if (localStorage.getItem("admin") !== "true") {
@@ -37,15 +45,26 @@ export default function AdminFactory() {
         setFactories(data);
     };
 
+    const handleAddInventoryRow = () => {
+        setInventoryItems([...inventoryItems, { sl: "", name: "", brand: "", qty: "" }]);
+    };
+
+    const handleInventoryChange = (index: number, field: string, value: string) => {
+        const updated = [...inventoryItems];
+        updated[index] = { ...updated[index], [field]: value };
+        setInventoryItems(updated);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         await fetch("/api/factory", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(form),
+            body: JSON.stringify({ ...form, inventoryItems }),
         });
-        setForm({ name: "", location: "", capacity: "", machinery: "", status: "active" });
+        setForm({ name: "", location: "", capacity: "", machineryType: "", image: "", label: "", status: "active" });
+        setInventoryItems([{ sl: "", name: "", brand: "", qty: "" }]);
         fetchFactories();
         setLoading(false);
     };
@@ -70,38 +89,93 @@ export default function AdminFactory() {
                 {/* Add Form */}
                 <div className="bg-white rounded-2xl shadow-sm p-6 mb-8 border border-gray-100">
                     <h2 className="text-lg font-bold text-gray-900 mb-4">Add New Factory</h2>
-                    <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <input
-                            placeholder="Factory Name"
-                            value={form.name}
-                            onChange={(e) => setForm({ ...form, name: e.target.value })}
-                            required
-                            className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        />
-                        <input
-                            placeholder="Location"
-                            value={form.location}
-                            onChange={(e) => setForm({ ...form, location: e.target.value })}
-                            required
-                            className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        />
-                        <input
-                            placeholder="Capacity"
-                            type="number"
-                            value={form.capacity}
-                            onChange={(e) => setForm({ ...form, capacity: e.target.value })}
-                            className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        />
-                        <input
-                            placeholder="Machinery"
-                            value={form.machinery}
-                            onChange={(e) => setForm({ ...form, machinery: e.target.value })}
-                            className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        />
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <input
+                                placeholder="Factory Name"
+                                value={form.name}
+                                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                required
+                                className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                            <input
+                                placeholder="Location"
+                                value={form.location}
+                                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                                required
+                                className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                            <input
+                                placeholder="Capacity"
+                                type="number"
+                                value={form.capacity}
+                                onChange={(e) => setForm({ ...form, capacity: e.target.value })}
+                                className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                            <input
+                                placeholder="Machinery Type (e.g. Cutting)"
+                                value={form.machineryType}
+                                onChange={(e) => setForm({ ...form, machineryType: e.target.value })}
+                                className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                            <input
+                                placeholder="Image URL"
+                                value={form.image}
+                                onChange={(e) => setForm({ ...form, image: e.target.value })}
+                                className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                            <input
+                                placeholder="Label (e.g. NEEDLE DETECTOR MACHINE)"
+                                value={form.label}
+                                onChange={(e) => setForm({ ...form, label: e.target.value })}
+                                className="border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                            />
+                        </div>
+
+                        {/* Inventory Items */}
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-700 mb-2">Inventory Items (Table)</h3>
+                            {inventoryItems.map((item, index) => (
+                                <div key={index} className="grid grid-cols-4 gap-2 mb-2">
+                                    <input
+                                        placeholder="SL"
+                                        value={item.sl}
+                                        onChange={(e) => handleInventoryChange(index, "sl", e.target.value)}
+                                        className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    />
+                                    <input
+                                        placeholder="Machine Name"
+                                        value={item.name}
+                                        onChange={(e) => handleInventoryChange(index, "name", e.target.value)}
+                                        className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    />
+                                    <input
+                                        placeholder="Brand"
+                                        value={item.brand}
+                                        onChange={(e) => handleInventoryChange(index, "brand", e.target.value)}
+                                        className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    />
+                                    <input
+                                        placeholder="Qty"
+                                        value={item.qty}
+                                        onChange={(e) => handleInventoryChange(index, "qty", e.target.value)}
+                                        className="border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                                    />
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={handleAddInventoryRow}
+                                className="text-sm text-blue-500 hover:text-blue-700 mt-1"
+                            >
+                                + Add Row
+                            </button>
+                        </div>
+
                         <button
                             type="submit"
                             disabled={loading}
-                            className="sm:col-span-2 bg-[#1a9fd4] hover:bg-[#1589b8] text-white font-semibold py-3 rounded-xl transition-all duration-200 text-sm"
+                            className="w-full bg-[#1a9fd4] hover:bg-[#1589b8] text-white font-semibold py-3 rounded-xl transition-all duration-200 text-sm"
                         >
                             {loading ? "Adding..." : "Add Factory"}
                         </button>
@@ -115,7 +189,7 @@ export default function AdminFactory() {
                             <tr>
                                 <th className="text-left px-6 py-4 text-xs font-bold text-gray-600 uppercase">Name</th>
                                 <th className="text-left px-6 py-4 text-xs font-bold text-gray-600 uppercase">Location</th>
-                                <th className="text-left px-6 py-4 text-xs font-bold text-gray-600 uppercase">Status</th>
+                                <th className="text-left px-6 py-4 text-xs font-bold text-gray-600 uppercase">Type</th>
                                 <th className="text-left px-6 py-4 text-xs font-bold text-gray-600 uppercase">Action</th>
                             </tr>
                         </thead>
@@ -129,9 +203,7 @@ export default function AdminFactory() {
                                     <tr key={factory._id} className="border-b border-gray-100 hover:bg-gray-50">
                                         <td className="px-6 py-4 font-medium text-gray-900">{factory.name}</td>
                                         <td className="px-6 py-4 text-gray-500">{factory.location}</td>
-                                        <td className="px-6 py-4">
-                                            <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">{factory.status}</span>
-                                        </td>
+                                        <td className="px-6 py-4 text-gray-500">{factory.machineryType}</td>
                                         <td className="px-6 py-4">
                                             <button
                                                 onClick={() => handleDelete(factory._id)}
