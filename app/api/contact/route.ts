@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     // Email পাঠাও
     await resend.emails.send({
         from: "onboarding@resend.dev",
-        to: process.env.TO_EMAIL as string,
+        to: "mdsakibchowdhuryofficial00@gmail.com",
         subject: `New Contact Message from ${body.name}`,
         html: `
       <h2>New Contact Message</h2>
